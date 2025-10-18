@@ -1,0 +1,70 @@
+You are an expert full-stack Python developer.
+
+⚡ Build me a complete runnable project for an **AI-powered Student Grading Assistant**.
+
+---
+
+## Project Overview
+- Tech stack: **Flask + SQLite + SQLAlchemy + Flask-Login**
+- AI model: **Gemini API** (via `google-generativeai`, key from env `GEMINI_API_KEY`)
+- Purpose: Students upload assignments → Teachers generate feedback using AI → Everything stored in DB → Students view their feedback.
+
+---
+
+## Features
+
+### Authentication
+- Student and Teacher roles.
+- Login/Register system with password hashing (Werkzeug).
+- Store users in DB with role field (`student` or `teacher`).
+
+### Student Role
+- Upload assignment files (`PDF`, `DOCX`, `TXT`).
+- Extract text and store in DB with the file metadata.
+- View list of their own uploaded assignments.
+- View feedback given by teachers for their assignments.
+
+### Teacher Role
+- View all assignments from all students.
+- Open an assignment → click "Generate Feedback".
+- `ai_client.py` should call **Gemini API**:
+  - If `GEMINI_API_KEY` missing, fall back to mock text.
+  - Prompt:  
+    ```
+    You are a grading assistant. Read this student’s assignment and give
+    constructive, concise feedback and a numeric score (0–100).
+    ```
+- Store generated feedback + score in DB.
+- Teachers can view all assignments + feedback history.
+
+### Database
+- Use SQLAlchemy ORM models:
+  - `User (id, name, email, password_hash, role)`
+  - `Assignment (id, student_id, filename, filepath, text_content)`
+  - `Feedback (id, assignment_id, teacher_id, content, score, generated_by_ai)`
+- Relationships:
+  - 1 Student → many Assignments
+  - 1 Assignment → many Feedbacks
+  - 1 Teacher → many Feedbacks
+
+### Frontend
+- Use **Flask Jinja templates**.
+- Templates needed:
+  - `base.html` (navbar + layout)
+  - `login.html` & `register.html`
+  - `dashboard_student.html`
+  - `dashboard_teacher.html`
+  - `upload.html` (student upload page)
+  - `assignment_list.html` (teacher view of all assignments)
+  - `view_assignment.html` (details + feedback)
+- Styling: use **Bootstrap 5** (via CDN).
+
+### File Handling
+- Uploaded files saved in `/uploads`.
+- Extract plain text:
+  - PDFs → `pdfplumber`
+  - DOCX → `python-docx`
+  - TXT → simple read.
+
+### Config
+- `.env` file with:

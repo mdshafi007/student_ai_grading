@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}All Assignments - AI Grading Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="bi bi-file-text"></i> All Assignments
+            <small class="text-muted">({{ assignments|length }} total)</small>
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h4 class="text-primary">{{ assignments|length }}</h4>
+                        <p class="text-muted">Total Assignments</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-success">{{ assignments|selectattr('feedbacks')|list|length }}</h4>
+                        <p class="text-muted">Graded</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-warning">{{ assignments|rejectattr('feedbacks')|list|length }}</h4>
+                        <p class="text-muted">Pending</p>
+                    </div>
+                    <div class="col-md-3">
+                        {% set graded_assignments = assignments|selectattr('feedbacks')|list %}
+                        {% if graded_assignments %}
+                            {% set total_score = graded_assignments|sum(attribute='feedbacks.0.score') %}
+                            {% set average_score = (total_score / graded_assignments|length)|round(1) %}
+                            <h4 class="text-info">{{ average_score }}%</h4>
+                        {% else %}
+                            <h4 class="text-muted">-</h4>
+                        {% endif %}
+                        <p class="text-muted">Average Score</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        {% if assignments %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-primary">
+                    <tr>
+                        <th><i class="bi bi-person"></i> Student</th>
+                        <th><i class="bi bi-file-text"></i> Assignment</th>
+                        <th><i class="bi bi-calendar"></i> Uploaded</th>
+                        <th><i class="bi bi-chat-square-text"></i> Status</th>
+                        <th><i class="bi bi-star"></i> Score</th>
+                        <th><i class="bi bi-gear"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    <tr>
+                        <td>
+                            <i class="bi bi-person-circle"></i>
+                            {{ assignment.student.name }}
+                            <br>
+                            <small class="text-muted">{{ assignment.student.email }}</small>
+                        </td>
+                        <td>
+                            <i class="bi bi-file-earmark-text"></i>
+                            {{ assignment.filename }}
+                            <br>
+                            <small class="text-muted">{{ assignment.text_content[:50] }}...</small>
+                        </td>
+                        <td>{{ assignment.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if assignment.feedbacks %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Graded ({{ assignment.feedbacks|length }})
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-clock"></i> Pending Review
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if assignment.feedbacks %}
+                                {% set latest_feedback = assignment.feedbacks|selectattr('score')|first %}
+                                {% if latest_feedback %}
+                                    <span class="badge bg-{{ 'success' if latest_feedback.score >= 80 else 'warning' if latest_feedback.score >= 60 else 'danger' }}">
+                                        {{ latest_feedback.score }}/100
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">No score</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('view_assignment', assignment_id=assignment.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                {% if not assignment.feedbacks %}
+                                <form method="POST" action="{{ url_for('generate_feedback', assignment_id=assignment.id) }}" 
+                                      style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-success" 
+                                            onclick="return confirm('Generate AI feedback for this assignment?')">
+                                        <i class="bi bi-robot"></i> Generate Feedback
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i>
+            <h5>No assignments submitted yet</h5>
+            <p class="mb-0">Students haven't submitted any assignments for grading yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

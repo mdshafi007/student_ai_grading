@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{{ assignment.filename }} - AI Grading Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    {% if current_user.role == 'student' %}
+                        <a href="{{ url_for('student_dashboard') }}">Dashboard</a>
+                    {% else %}
+                        <a href="{{ url_for('teacher_dashboard') }}">Dashboard</a>
+                    {% endif %}
+                </li>
+                {% if current_user.role == 'teacher' %}
+                <li class="breadcrumb-item"><a href="{{ url_for('assignment_list') }}">All Assignments</a></li>
+                {% endif %}
+                <li class="breadcrumb-item active">{{ assignment.filename }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="card-title mb-0">
+                    <i class="bi bi-file-earmark-text"></i> {{ assignment.filename }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong><i class="bi bi-person"></i> Student:</strong> {{ assignment.student.name }}
+                    </div>
+                    <div class="col-md-6">
+                        <strong><i class="bi bi-calendar"></i> Uploaded:</strong> {{ assignment.uploaded_at.strftime('%Y-%m-%d %H:%M') }}
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h5><i class="bi bi-file-text"></i> Assignment Content</h5>
+                <div class="bg-light p-3 rounded" style="max-height: 400px; overflow-y: auto;">
+                    <pre style="white-space: pre-wrap; font-family: inherit;">{{ assignment.text_content or 'No text content extracted.' }}</pre>
+                </div>
+                
+                {% if current_user.role == 'teacher' and not feedbacks %}
+                <div class="mt-3">
+                    <form method="POST" action="{{ url_for('generate_feedback', assignment_id=assignment.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-success btn-lg" 
+                                onclick="return confirm('Generate AI feedback for this assignment?')">
+                            <i class="bi bi-robot"></i> Generate AI Feedback
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-chat-square-text"></i> Feedback & Grading
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if feedbacks %}
+                    {% for feedback in feedbacks %}
+                    <div class="feedback-item mb-3 {% if not loop.last %}border-bottom pb-3{% endif %}">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong class="text-primary">
+                                <i class="bi bi-person-check"></i> {{ feedback.teacher.name }}
+                            </strong>
+                            {% if feedback.score %}
+                            <span class="badge bg-{{ 'success' if feedback.score >= 80 else 'warning' if feedback.score >= 60 else 'danger' }} fs-6">
+                                {{ feedback.score }}/100
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="feedback-content bg-light p-3 rounded mb-2">
+                            <p class="mb-0">{{ feedback.content }}</p>
+                        </div>
+                        
+                        <div class="feedback-meta">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar"></i> {{ feedback.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                {% if feedback.generated_by_ai %}
+                                <span class="badge bg-info ms-2">
+                                    <i class="bi bi-robot"></i> AI Generated
+                                </span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="bi bi-clock display-4"></i>
+                        <p class="mt-2 mb-0">No feedback yet</p>
+                        {% if current_user.role == 'student' %}
+                        <small>Your teacher will provide feedback soon.</small>
+                        {% else %}
+                        <small>Click "Generate AI Feedback" to provide feedback.</small>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        {% if current_user.role == 'student' and feedbacks %}
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="bi bi-lightbulb"></i> Performance Summary
+                </h6>
+            </div>
+            <div class="card-body">
+                {% set latest_feedback = feedbacks|selectattr('score')|first %}
+                {% if latest_feedback %}
+                <div class="text-center">
+                    <div class="progress mb-2" style="height: 20px;">
+                        <div class="progress-bar bg-{{ 'success' if latest_feedback.score >= 80 else 'warning' if latest_feedback.score >= 60 else 'danger' }}" 
+                             style="width: {{ latest_feedback.score }}%">
+                            {{ latest_feedback.score }}%
+                        </div>
+                    </div>
+                    <p class="mb-0">
+                        {% if latest_feedback.score >= 90 %}
+                            <i class="bi bi-trophy text-warning"></i> Excellent work!
+                        {% elif latest_feedback.score >= 80 %}
+                            <i class="bi bi-star text-success"></i> Great job!
+                        {% elif latest_feedback.score >= 70 %}
+                            <i class="bi bi-check-circle text-info"></i> Good work!
+                        {% elif latest_feedback.score >= 60 %}
+                            <i class="bi bi-exclamation-circle text-warning"></i> Needs improvement
+                        {% else %}
+                            <i class="bi bi-x-circle text-danger"></i> Requires significant improvement
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

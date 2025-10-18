@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Assignment - AI Grading Assistant{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">
+                    <i class="bi bi-cloud-upload"></i> Upload Assignment
+                </h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-4">
+                        <label for="file" class="form-label">
+                            <i class="bi bi-file-earmark-text"></i> Select Assignment File
+                        </label>
+                        <input type="file" class="form-control" id="file" name="file" 
+                               accept=".pdf,.docx,.txt" required>
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i>
+                            Supported formats: PDF, DOCX, TXT (Max size: 16MB)
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb"></i>
+                        <strong>Tips for better results:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Ensure your text is clear and readable</li>
+                            <li>Include proper formatting and structure</li>
+                            <li>Check that all content is included in the file</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-cloud-upload"></i> Upload Assignment
+                        </button>
+                        <a href="{{ url_for('student_dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-question-circle"></i> How it works
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <i class="bi bi-cloud-upload display-6 text-primary"></i>
+                        <h6 class="mt-2">1. Upload</h6>
+                        <p class="text-muted">Submit your assignment file</p>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <i class="bi bi-robot display-6 text-info"></i>
+                        <h6 class="mt-2">2. AI Analysis</h6>
+                        <p class="text-muted">Teachers generate AI-powered feedback</p>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <i class="bi bi-star display-6 text-success"></i>
+                        <h6 class="mt-2">3. Get Results</h6>
+                        <p class="text-muted">Receive detailed feedback and scores</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

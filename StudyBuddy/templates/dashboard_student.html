@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - AI Grading Assistant{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="bi bi-house"></i> Student Dashboard
+            <small class="text-muted">Welcome, {{ current_user.name }}</small>
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <i class="bi bi-cloud-upload display-4 text-primary"></i>
+                <h5 class="card-title mt-2">Upload Assignment</h5>
+                <p class="card-text">Submit your assignments for grading</p>
+                <a href="{{ url_for('upload_assignment') }}" class="btn btn-primary">
+                    <i class="bi bi-cloud-upload"></i> Upload New Assignment
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <i class="bi bi-graph-up display-4 text-success"></i>
+                <h5 class="card-title mt-2">Your Progress</h5>
+                <p class="card-text">{{ assignments|length }} assignments submitted</p>
+                <p class="text-muted">Keep up the great work!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-3">
+            <i class="bi bi-file-text"></i> Your Assignments
+        </h3>
+        
+        {% if assignments %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-primary">
+                    <tr>
+                        <th><i class="bi bi-file-text"></i> Filename</th>
+                        <th><i class="bi bi-calendar"></i> Uploaded</th>
+                        <th><i class="bi bi-chat-square-text"></i> Feedback</th>
+                        <th><i class="bi bi-star"></i> Score</th>
+                        <th><i class="bi bi-eye"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    <tr>
+                        <td>
+                            <i class="bi bi-file-earmark-text"></i>
+                            {{ assignment.filename }}
+                        </td>
+                        <td>{{ assignment.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                        <td>
+                            {% if assignment.feedbacks %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> {{ assignment.feedbacks|length }} feedback(s)
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-clock"></i> Pending
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if assignment.feedbacks %}
+                                {% set latest_feedback = assignment.feedbacks|selectattr('score')|first %}
+                                {% if latest_feedback %}
+                                    <span class="badge bg-{{ 'success' if latest_feedback.score >= 80 else 'warning' if latest_feedback.score >= 60 else 'danger' }}">
+                                        {{ latest_feedback.score }}/100
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('view_assignment', assignment_id=assignment.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i>
+            <h5>No assignments yet</h5>
+            <p class="mb-0">Ready to submit your first assignment? 
+                <a href="{{ url_for('upload_assignment') }}" class="btn btn-primary ms-2">
+                    <i class="bi bi-cloud-upload"></i> Upload Assignment
+                </a>
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
